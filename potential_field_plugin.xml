@@ -1,7 +1,8 @@
 <library path="lib/libpotential_field_recovery">
   <class name="potential_field_recovery/PotentialFieldRecovery" type="potential_field_recovery::PotentialFieldRecovery" base_class_type="nav_core::RecoveryBehavior">
     <description>
-      A recovery behavior that performs a 360 degree in-place rotation to attempt to clear out space.
+      A recovery behavior that seeks a velocity vector to unstuck a robot.
+      Currently it is limited to omni-directional robots.
     </description>
   </class>
 </library>
