@@ -40,7 +40,7 @@
 #include <visualization_msgs/Marker.h>
 
 //register this planner as a RecoveryBehavior plugin
-PLUGINLIB_DECLARE_CLASS(potential_field_recovery, PotentialFieldRecovery, potential_field_recovery::PotentialFieldRecovery, nav_core::RecoveryBehavior)
+PLUGINLIB_EXPORT_CLASS(potential_field_recovery::PotentialFieldRecovery, nav_core::RecoveryBehavior)
 
 namespace potential_field_recovery {
 PotentialFieldRecovery::PotentialFieldRecovery(): global_costmap_(NULL), local_costmap_(NULL), 
