@@ -40,17 +40,16 @@
 #include <visualization_msgs/Marker.h>
 
 //register this planner as a RecoveryBehavior plugin
-PLUGINLIB_DECLARE_CLASS(potential_field_recovery, PotentialFieldRecovery, potential_field_recovery::PotentialFieldRecovery, nav_core::RecoveryBehavior)
+PLUGINLIB_EXPORT_CLASS(potential_field_recovery::PotentialFieldRecovery, nav_core::RecoveryBehavior)
 
 namespace potential_field_recovery {
 PotentialFieldRecovery::PotentialFieldRecovery(): global_costmap_(NULL), local_costmap_(NULL), 
-  tf_(NULL), initialized_(false), world_model_(NULL) {} 
+  initialized_(false), world_model_(NULL) {}
 
-void PotentialFieldRecovery::initialize(std::string name, tf::TransformListener* tf,
+void PotentialFieldRecovery::initialize(std::string name, tf2_ros::Buffer* tf,
     costmap_2d::Costmap2DROS* global_costmap, costmap_2d::Costmap2DROS* local_costmap){
   if(!initialized_){
     name_ = name;
-    tf_ = tf;
     global_costmap_ = global_costmap;
     local_costmap_ = local_costmap;
 
@@ -98,7 +97,8 @@ void PotentialFieldRecovery::runBehavior(){
   ros::Publisher vel_pub = n.advertise<geometry_msgs::Twist>("cmd_vel", 10);
   marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker_recovery", 10);
 
-  tf::Stamped<tf::Pose> global_pose;
+  tf::Stamped<tf::Pose> global_pose_tf;
+  geometry_msgs::PoseStamped global_pose;
   local_costmap_->resetLayers();
   ros::Duration(1).sleep();
   local_costmap_->getRobotPose(global_pose);
@@ -107,14 +107,16 @@ void PotentialFieldRecovery::runBehavior(){
 
   bool got_180 = false;
 
-  double start_offset = 0 - angles::normalize_angle(tf::getYaw(global_pose.getRotation()));
+  double start_offset = 0 - angles::normalize_angle(tf::getYaw(global_pose_tf.getRotation()));
+  tf::poseStampedMsgToTF(global_pose, global_pose_tf);
   int id = 0;
   while(n.ok()){
     local_costmap_->getRobotPose(global_pose);
+    tf::poseStampedMsgToTF(global_pose, global_pose_tf);
 
-    double robot_x = global_pose.getOrigin().x();
-    double robot_y = global_pose.getOrigin().y();
-    double robot_ori = tf::getYaw(global_pose.getRotation());
+    double robot_x = global_pose_tf.getOrigin().x();
+    double robot_y = global_pose_tf.getOrigin().y();
+    double robot_ori = tf::getYaw(global_pose_tf.getRotation());
 
     double footprint_cost = world_model_->footprintCost(robot_x, robot_y, robot_ori, local_costmap_->getRobotFootprint(), 0.0, 0.0);
 
@@ -123,8 +125,8 @@ void PotentialFieldRecovery::runBehavior(){
     double cur_world_x = 0.0;
     double cur_world_y = 0.0;
 
-    double cur_robot_x = global_pose.getOrigin().x();
-    double cur_robot_y = global_pose.getOrigin().y();
+    double cur_robot_x = global_pose_tf.getOrigin().x();
+    double cur_robot_y = global_pose_tf.getOrigin().y();
 
     float target_x = 0.0, target_y = 0.0;
     float target_r = 0.0, target_phi = 0.0;
